@@ -19,12 +19,22 @@ async fn manual_hello() -> impl Responder {
     HttpResponse::Ok().body("Hey there!")
 }
 
+fn config(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        web::resource("/app")
+            .route(web::get().to(|| async { HttpResponse::Ok().body("app") }))
+            .route(web::head().to(HttpResponse::MethodNotAllowed))
+    );
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .app_data(web::Data::new(
                 AppState { app_name: String::from("Actix Web") }))
+            .configure(config)
+            .service(web::scope("/api").configure(config))
             .service(index)
             .service(echo)
             .route("/hey", web::get().to(manual_hello))
